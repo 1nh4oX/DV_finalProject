@@ -68,3 +68,10 @@ original/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# Climate数据集 - 原始数据
+climate/data/raw/GlobalLandTemperaturesByCity.csv
+climate/data/raw/GlobalLandTemperaturesByCountry.csv
+climate/data/raw/GlobalLandTemperaturesByMajorCity.csv
+climate/data/raw/GlobalLandTemperaturesByState.csv
+climate/data/raw/GlobalTemperatures.csv
