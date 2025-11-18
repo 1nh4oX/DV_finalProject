@@ -88,8 +88,8 @@ def main():
         print(df_traffic.head(10))
         
         # 保存数据
-        os.makedirs('data/raw', exist_ok=True)
-        output_file = 'data/raw/traffic_realtime.csv'
+        os.makedirs('trafficData/raw', exist_ok=True)
+        output_file = 'trafficData/raw/traffic_realtime.csv'
         df_traffic.to_csv(output_file, index=False, encoding='utf-8-sig')
         print(f"\n✅ 数据已保存: {output_file}")
         
@@ -128,8 +128,8 @@ def main():
         print("\n数据预览:")
         print(df_od)
         
-        os.makedirs('data/raw', exist_ok=True)
-        output_file = 'data/raw/od_matrix_amap.csv'
+        os.makedirs('trafficData/raw', exist_ok=True)
+        output_file = 'trafficData/raw/od_matrix_amap.csv'
         df_od.to_csv(output_file, index=False, encoding='utf-8-sig')
         print(f"\n✅ OD数据已保存: {output_file}")
         
@@ -147,10 +147,10 @@ def main():
     print()
     print("📁 生成的文件：")
     files_generated = []
-    if os.path.exists('data/raw/traffic_realtime.csv'):
-        files_generated.append("  - data/raw/traffic_realtime.csv  (实时交通数据)")
-    if os.path.exists('data/raw/od_matrix_amap.csv'):
-        files_generated.append("  - data/raw/od_matrix_amap.csv  (OD路径数据)")
+    if os.path.exists('trafficData/raw/traffic_realtime.csv'):
+        files_generated.append("  - trafficData/raw/traffic_realtime.csv  (实时交通数据)")
+    if os.path.exists('trafficData/raw/od_matrix_amap.csv'):
+        files_generated.append("  - trafficData/raw/od_matrix_amap.csv  (OD路径数据)")
     
     if files_generated:
         for f in files_generated:
@@ -160,7 +160,7 @@ def main():
     
     print()
     print("💡 下一步：")
-    print("  1. 查看采集的数据: cat data/raw/od_matrix_amap.csv")
+    print("  1. 查看采集的数据: cat trafficData/raw/od_matrix_amap.csv")
     print("  2. 可以多次运行此脚本采集不同时段的数据")
     print("  3. 使用采集的数据替换模拟数据进行分析")
     print()

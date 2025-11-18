@@ -348,7 +348,7 @@ def main():
     
     # 保存数据
     import os
-    data_dir = '../data/sample'
+    data_dir = '../trafficData/sample'
     os.makedirs(data_dir, exist_ok=True)
     
     for name, df in datasets.items():

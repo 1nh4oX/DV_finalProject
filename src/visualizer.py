@@ -135,7 +135,7 @@ ROCKET_R_CMAP = sns.color_palette("rocket_r", as_cmap=True)
 class TrafficVisualizer:
     """交通数据可视化类"""
     
-    def __init__(self, data_dir='../data/sample', output_dir='../outputs/figures'):
+    def __init__(self, data_dir='../trafficData/sample', output_dir='../outputs/figures'):
         self.data_dir = data_dir
         self.output_dir = output_dir
         

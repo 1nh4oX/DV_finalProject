@@ -29,7 +29,7 @@ def main():
     datasets = generator.generate_all_data()
     
     # 保存数据
-    data_dir = 'data/sample'
+    data_dir = 'trafficData/sample'
     os.makedirs(data_dir, exist_ok=True)
     
     for name, df in datasets.items():
@@ -53,7 +53,7 @@ def main():
     print("🎉 分析完成！")
     print()
     print("📁 生成的文件：")
-    print("  - 数据文件: data/sample/")
+    print("  - 数据文件: trafficData/sample/")
     print("  - 可视化图表: outputs/figures/")
     print()
     print("📝 接下来的步骤：")

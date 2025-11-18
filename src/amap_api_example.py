@@ -343,7 +343,7 @@ def example_usage():
         print(df_traffic.head(10))
         
         # 保存数据
-        output_file = '../data/raw/traffic_realtime.csv'
+        output_file = '../trafficData/raw/traffic_realtime.csv'
         df_traffic.to_csv(output_file, index=False, encoding='utf-8-sig')
         print(f"\n✓ 数据已保存: {output_file}")
     
@@ -384,7 +384,7 @@ def example_usage():
         print("\nOD数据预览:")
         print(df_od)
         
-        output_file = '../data/raw/od_matrix_amap.csv'
+        output_file = '../trafficData/raw/od_matrix_amap.csv'
         df_od.to_csv(output_file, index=False, encoding='utf-8-sig')
         print(f"\n✓ OD数据已保存: {output_file}")
     
@@ -408,7 +408,7 @@ def continuous_collection():
     if not df.empty:
         # 保存数据
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f'../data/raw/traffic_24h_{timestamp}.csv'
+        output_file = f'../trafficData/raw/traffic_24h_{timestamp}.csv'
         df.to_csv(output_file, index=False, encoding='utf-8-sig')
         print(f"\n✓ 数据已保存: {output_file}")
         
