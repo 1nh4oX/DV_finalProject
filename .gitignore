@@ -1,1 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# 输出结果文件夹 - 防止文件过大
+# Climate模块输出
+climate/output/
+climate/data/processed/
+
+# Traffic模块输出
+traffic/output/
+traffic/data/processed/
+
+# 其他可能的输出文件夹
+output/
+outputs/
+figures/
+reports/
+
+# 生成的数据文件（可选，如果需要版本控制数据可以注释掉）
+# climate/data/raw/*.csv
+# traffic/data/sample/*.csv
+
+# 图表文件
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.html
+*.svg
+
+# 临时文件
+*.tmp
+*.log
+*.cache
 .DS_Store
+test_*.png
+test_*.html
+
+# 原始数据（大文件）
+original/
+*.csv.bak
+*.xlsx.bak
+
+# 系统文件
+.DS_Store
+Thumbs.db
