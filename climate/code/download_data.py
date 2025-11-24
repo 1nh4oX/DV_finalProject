@@ -7,6 +7,8 @@ import shutil
 import os
 from pathlib import Path
 import sys
+import time
+import socket
 
 # 支持从环境变量读取 token
 if 'KAGGLE_API_TOKEN' in os.environ:
@@ -27,6 +29,39 @@ if 'KAGGLE_API_TOKEN' in os.environ:
             json.dump(config, f)
         os.chmod(kaggle_json, 0o600)
         print(f"✓ 已从环境变量配置 Kaggle API Token")
+
+# 设置更长的超时时间
+socket.setdefaulttimeout(300)  # 5分钟超时
+
+def download_with_retry(dataset_name, max_retries=3, retry_delay=5):
+    """
+    带重试机制的下载函数
+    
+    Args:
+        dataset_name: 数据集名称
+        max_retries: 最大重试次数
+        retry_delay: 重试延迟（秒）
+    
+    Returns:
+        下载路径或 None
+    """
+    for attempt in range(max_retries):
+        try:
+            if attempt > 0:
+                print(f"  🔄 第 {attempt + 1} 次重试...")
+                time.sleep(retry_delay)
+            
+            path = kagglehub.dataset_download(dataset_name)
+            return path
+            
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"  ⚠️  下载失败: {e}")
+                print(f"  等待 {retry_delay} 秒后重试...")
+            else:
+                raise e
+    
+    return None
 
 def setup_directories(base_dir='../data/raw'):
     """创建必要的目录结构"""
@@ -54,7 +89,12 @@ def download_temperature_data(output_dir):
     
     try:
         print(f"正在下载数据集: {dataset_name}")
-        path = kagglehub.dataset_download(dataset_name)
+        print("⏳ 这可能需要几分钟，请耐心等待...")
+        path = download_with_retry(dataset_name)
+        
+        if path is None:
+            raise Exception("重试次数已用尽")
+        
         print(f"✓ 下载完成！路径: {path}")
         
         # 查找CSV文件并复制到目标目录
@@ -90,7 +130,12 @@ def download_co2_data(output_dir):
     
     try:
         print(f"正在下载数据集: {dataset_name}")
-        path = kagglehub.dataset_download(dataset_name)
+        print("⏳ 这可能需要几分钟，请耐心等待...")
+        path = download_with_retry(dataset_name)
+        
+        if path is None:
+            raise Exception("重试次数已用尽")
+        
         print(f"✓ 下载完成！路径: {path}")
         
         # 查找CSV文件并复制到目标目录
@@ -127,7 +172,12 @@ def download_sea_level_data(output_dir):
     
     try:
         print(f"正在下载数据集: {dataset_name}")
-        path = kagglehub.dataset_download(dataset_name)
+        print("⏳ 这可能需要几分钟，请耐心等待...")
+        path = download_with_retry(dataset_name)
+        
+        if path is None:
+            raise Exception("重试次数已用尽")
+        
         print(f"✓ 下载完成！路径: {path}")
         
         # 查找CSV文件并复制到目标目录
