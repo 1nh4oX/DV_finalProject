@@ -760,7 +760,343 @@ class ClimateVisualizer:
         plt.close()
         print("✓ 已保存：12_decade_comparison.png")
     
-    def generate_all_visualizations(self, df_global=None, df_country=None, df_city=None):
+    def plot_co2_trend(self, df_co2):
+        """图13: CO2排放趋势分析"""
+        print("正在绘制：CO2排放趋势分析...")
+        self._ensure_font()
+        
+        # 找到CO2列
+        co2_col = None
+        for col in df_co2.columns:
+            if 'co2' in col.lower() or 'emission' in col.lower():
+                co2_col = col
+                break
+        
+        if co2_col is None:
+            print("⚠️  未找到CO2列")
+            return
+        
+        # 按年份聚合（如果是按国家的数据）
+        if 'Country' in df_co2.columns or 'country' in df_co2.columns:
+            country_col = 'Country' if 'Country' in df_co2.columns else 'country'
+            df_yearly = df_co2.groupby('year')[co2_col].sum().reset_index()
+            df_yearly.columns = ['year', 'total_co2']
+        else:
+            df_yearly = df_co2.groupby('year')[co2_col].mean().reset_index()
+            df_yearly.columns = ['year', 'total_co2']
+        
+        df_yearly = df_yearly.dropna()
+        
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 12))
+        
+        # 子图1：CO2趋势线图
+        viridis_colors = sns.color_palette("viridis", 1)
+        ax1.plot(df_yearly['year'], df_yearly['total_co2'],
+                linewidth=2.5, color=viridis_colors[0], marker='o', markersize=3, alpha=0.8)
+        
+        # 添加趋势线
+        z = np.polyfit(df_yearly['year'], df_yearly['total_co2'], 1)
+        p = np.poly1d(z)
+        ax1.plot(df_yearly['year'], p(df_yearly['year']), 
+               'r--', linewidth=2, label=f'趋势线 (斜率: {z[0]:.2f}/年)', alpha=0.7)
+        
+        ax1.fill_between(df_yearly['year'], 0, df_yearly['total_co2'],
+                        alpha=0.3, color=viridis_colors[0])
+        
+        ax1.set_xlabel('年份', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_ylabel('CO2排放总量', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_title('全球CO2排放趋势', 
+                     fontsize=17, fontweight='bold', pad=25, color='#1a1a1a')
+        ax1.legend(fontsize=12, frameon=True, fancybox=True, framealpha=0.95, edgecolor='gray')
+        ax1.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        
+        # 子图2：TOP10排放国家（如果有国家数据）
+        if 'Country' in df_co2.columns or 'country' in df_co2.columns:
+            country_col = 'Country' if 'Country' in df_co2.columns else 'country'
+            recent_year = df_co2['year'].max()
+            df_recent = df_co2[df_co2['year'] >= recent_year - 5]
+            
+            country_emissions = df_recent.groupby(country_col)[co2_col].sum().sort_values(ascending=False).head(10)
+            
+            rocket_colors = sns.color_palette("rocket_r", len(country_emissions))
+            bars = ax2.barh(range(len(country_emissions)), country_emissions.values,
+                           color=rocket_colors, edgecolor='white', linewidth=0.8)
+            
+            ax2.set_yticks(range(len(country_emissions)))
+            ax2.set_yticklabels(country_emissions.index)
+            ax2.set_xlabel('CO2排放总量', fontsize=14, fontweight='bold', color='#333333')
+            ax2.set_title(f'TOP10 CO2排放国家（{recent_year-5}-{recent_year}）', 
+                         fontsize=16, fontweight='bold', pad=20, color='#1a1a1a')
+            ax2.grid(axis='x', alpha=0.35, linestyle='--', linewidth=0.8)
+            ax2.spines['top'].set_visible(False)
+            ax2.spines['right'].set_visible(False)
+            
+            # 添加数值标签
+            for i, (bar, value) in enumerate(zip(bars, country_emissions.values)):
+                ax2.text(value + max(country_emissions.values) * 0.01, bar.get_y() + bar.get_height()/2,
+                        f'{value:.0f}', va='center', fontweight='bold', fontsize=9)
+        else:
+            # 如果没有国家数据，显示年度增长率
+            df_yearly['growth_rate'] = df_yearly['total_co2'].pct_change() * 100
+            rocket_colors = sns.color_palette("rocket_r", 1)
+            ax2.bar(df_yearly['year'], df_yearly['growth_rate'],
+                   color=rocket_colors[0], edgecolor='white', linewidth=0.5, alpha=0.8)
+            ax2.axhline(0, color='black', linestyle='-', linewidth=1)
+            ax2.set_xlabel('年份', fontsize=14, fontweight='bold', color='#333333')
+            ax2.set_ylabel('年度增长率 (%)', fontsize=14, fontweight='bold', color='#333333')
+            ax2.set_title('CO2排放年度增长率', fontsize=16, fontweight='bold', pad=20, color='#1a1a1a')
+            ax2.grid(axis='y', alpha=0.35, linestyle='--', linewidth=0.8)
+            ax2.spines['top'].set_visible(False)
+            ax2.spines['right'].set_visible(False)
+        
+        plt.tight_layout()
+        plt.savefig(self.output_dir / '13_co2_trend.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print("✓ 已保存：13_co2_trend.png")
+    
+    def plot_co2_vs_temperature(self, df_co2, df_global):
+        """图14: CO2 vs 温度关系分析"""
+        print("正在绘制：CO2 vs 温度关系分析...")
+        self._ensure_font()
+        
+        # 找到CO2列
+        co2_col = None
+        for col in df_co2.columns:
+            if 'co2' in col.lower() or 'emission' in col.lower():
+                co2_col = col
+                break
+        
+        if co2_col is None:
+            print("⚠️  未找到CO2列")
+            return
+        
+        # 按年份聚合CO2数据
+        if 'Country' in df_co2.columns or 'country' in df_co2.columns:
+            df_co2_yearly = df_co2.groupby('year')[co2_col].sum().reset_index()
+            df_co2_yearly.columns = ['year', 'total_co2']
+        else:
+            df_co2_yearly = df_co2.groupby('year')[co2_col].mean().reset_index()
+            df_co2_yearly.columns = ['year', 'total_co2']
+        
+        # 按年份聚合温度数据
+        df_temp_yearly = df_global.groupby('year')['LandAverageTemperature'].mean().reset_index()
+        
+        # 合并数据
+        df_merged = pd.merge(df_co2_yearly, df_temp_yearly, on='year', how='inner')
+        df_merged = df_merged.dropna()
+        
+        if len(df_merged) == 0:
+            print("⚠️  没有重叠的年份数据")
+            return
+        
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+        
+        # 子图1：散点图 + 回归线
+        scatter = ax1.scatter(df_merged['total_co2'], df_merged['LandAverageTemperature'],
+                            c=df_merged['year'], cmap=ROCKET_R_CMAP,
+                            s=80, alpha=0.7, edgecolors='white', linewidth=0.5)
+        
+        # 添加回归线
+        z = np.polyfit(df_merged['total_co2'], df_merged['LandAverageTemperature'], 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(df_merged['total_co2'].min(), df_merged['total_co2'].max(), 100)
+        ax1.plot(x_line, p(x_line), 'r--', linewidth=2.5, 
+                label=f'回归线: y = {z[0]:.6f}x + {z[1]:.2f}')
+        
+        # 计算相关系数
+        r = np.corrcoef(df_merged['total_co2'], df_merged['LandAverageTemperature'])[0, 1]
+        ax1.text(0.05, 0.95, f'相关系数 R = {r:.3f}', transform=ax1.transAxes,
+                fontsize=12, fontweight='bold', verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        ax1.set_xlabel('CO2排放总量', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_ylabel('平均温度 (°C)', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_title('CO2排放 vs 全球温度', 
+                     fontsize=16, fontweight='bold', pad=20, color='#1a1a1a')
+        ax1.legend(fontsize=11, frameon=True, fancybox=True, framealpha=0.95, edgecolor='gray')
+        ax1.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        cbar1 = plt.colorbar(scatter, ax=ax1, shrink=0.8)
+        cbar1.set_label('年份', fontsize=12, fontweight='bold', color='#333333')
+        
+        # 子图2：双Y轴时间序列对比
+        ax2_twin = ax2.twinx()
+        
+        viridis_colors = sns.color_palette("viridis", 2)
+        rocket_colors = sns.color_palette("rocket_r", 2)
+        line1 = ax2.plot(df_merged['year'], df_merged['total_co2'],
+                        linewidth=2.5, color=viridis_colors[0], label='CO2排放', marker='o', markersize=3)
+        line2 = ax2_twin.plot(df_merged['year'], df_merged['LandAverageTemperature'],
+                             linewidth=2.5, color=rocket_colors[0],
+                             label='平均温度', marker='s', markersize=3)
+        
+        ax2.set_xlabel('年份', fontsize=14, fontweight='bold', color='#333333')
+        ax2.set_ylabel('CO2排放总量', fontsize=14, fontweight='bold', color=viridis_colors[0])
+        ax2_twin.set_ylabel('平均温度 (°C)', fontsize=14, fontweight='bold', color='red')
+        ax2.set_title('CO2排放与温度趋势对比', 
+                     fontsize=16, fontweight='bold', pad=20, color='#1a1a1a')
+        
+        # 合并图例
+        lines = line1 + line2
+        labels = [l.get_label() for l in lines]
+        ax2.legend(lines, labels, fontsize=11, frameon=True, fancybox=True, framealpha=0.95, edgecolor='gray', loc='upper left')
+        
+        ax2.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        
+        plt.tight_layout()
+        plt.savefig(self.output_dir / '14_co2_vs_temperature.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print("✓ 已保存：14_co2_vs_temperature.png")
+    
+    def plot_sea_level_trend(self, df_sea_level):
+        """图15: 海平面上升趋势分析"""
+        print("正在绘制：海平面上升趋势分析...")
+        self._ensure_font()
+        
+        # 找到海平面列
+        sea_level_col = None
+        for col in df_sea_level.columns:
+            if 'sea' in col.lower() or 'level' in col.lower() or 'gmsl' in col.lower():
+                sea_level_col = col
+                break
+        
+        if sea_level_col is None:
+            print("⚠️  未找到海平面列")
+            return
+        
+        # 按年份聚合
+        df_yearly = df_sea_level.groupby('year')[sea_level_col].mean().reset_index()
+        df_yearly = df_yearly.dropna()
+        df_yearly = df_yearly.sort_values('year')
+        
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 12))
+        
+        # 子图1：海平面趋势线图
+        viridis_colors = sns.color_palette("viridis", 1)
+        ax1.plot(df_yearly['year'], df_yearly[sea_level_col],
+                linewidth=2.5, color=viridis_colors[0], marker='o', markersize=4, alpha=0.8)
+        
+        # 添加趋势线
+        z = np.polyfit(df_yearly['year'], df_yearly[sea_level_col], 1)
+        p = np.poly1d(z)
+        ax1.plot(df_yearly['year'], p(df_yearly['year']), 
+               'r--', linewidth=2, label=f'趋势线 (斜率: {z[0]:.4f} mm/年)', alpha=0.7)
+        
+        # 填充区域
+        ax1.fill_between(df_yearly['year'], df_yearly[sea_level_col].min(), df_yearly[sea_level_col],
+                        alpha=0.3, color=viridis_colors[0])
+        
+        ax1.set_xlabel('年份', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_ylabel('海平面高度 (mm)', fontsize=14, fontweight='bold', color='#333333')
+        ax1.set_title('全球海平面上升趋势', 
+                     fontsize=17, fontweight='bold', pad=25, color='#1a1a1a')
+        ax1.legend(fontsize=12, frameon=True, fancybox=True, framealpha=0.95, edgecolor='gray')
+        ax1.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        
+        # 添加统计信息
+        total_rise = df_yearly[sea_level_col].max() - df_yearly[sea_level_col].min()
+        avg_rate = z[0]  # mm/年
+        ax1.text(0.02, 0.98, 
+                f'总上升: {total_rise:.2f} mm\n平均速率: {avg_rate:.2f} mm/年', 
+                transform=ax1.transAxes, fontsize=12, fontweight='bold',
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.7))
+        
+        # 子图2：年度变化量
+        df_yearly['annual_change'] = df_yearly[sea_level_col].diff()
+        rocket_colors = sns.color_palette("rocket_r", 1)
+        colors = ['red' if x > 0 else 'blue' for x in df_yearly['annual_change']]
+        bars = ax2.bar(df_yearly['year'], df_yearly['annual_change'],
+                      color=colors, alpha=0.7, edgecolor='white', linewidth=0.5)
+        ax2.axhline(0, color='black', linestyle='-', linewidth=1)
+        
+        ax2.set_xlabel('年份', fontsize=14, fontweight='bold', color='#333333')
+        ax2.set_ylabel('年度变化 (mm)', fontsize=14, fontweight='bold', color='#333333')
+        ax2.set_title('海平面年度变化量', 
+                     fontsize=17, fontweight='bold', pad=25, color='#1a1a1a')
+        ax2.grid(axis='y', alpha=0.35, linestyle='--', linewidth=0.8)
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        
+        plt.tight_layout()
+        plt.savefig(self.output_dir / '15_sea_level_trend.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print("✓ 已保存：15_sea_level_trend.png")
+    
+    def plot_sea_level_vs_temperature(self, df_sea_level, df_global):
+        """图16: 海平面 vs 温度关系分析"""
+        print("正在绘制：海平面 vs 温度关系分析...")
+        self._ensure_font()
+        
+        # 找到海平面列
+        sea_level_col = None
+        for col in df_sea_level.columns:
+            if 'sea' in col.lower() or 'level' in col.lower() or 'gmsl' in col.lower():
+                sea_level_col = col
+                break
+        
+        if sea_level_col is None:
+            print("⚠️  未找到海平面列")
+            return
+        
+        # 按年份聚合
+        df_sea_yearly = df_sea_level.groupby('year')[sea_level_col].mean().reset_index()
+        df_temp_yearly = df_global.groupby('year')['LandAverageTemperature'].mean().reset_index()
+        
+        # 合并数据
+        df_merged = pd.merge(df_sea_yearly, df_temp_yearly, on='year', how='inner')
+        df_merged = df_merged.dropna()
+        
+        if len(df_merged) == 0:
+            print("⚠️  没有重叠的年份数据")
+            return
+        
+        fig, ax = plt.subplots(figsize=(16, 8))
+        
+        # 散点图 + 回归线
+        scatter = ax.scatter(df_merged['LandAverageTemperature'], df_merged[sea_level_col],
+                           c=df_merged['year'], cmap=ROCKET_R_CMAP,
+                           s=100, alpha=0.7, edgecolors='white', linewidth=0.5)
+        
+        # 添加回归线
+        z = np.polyfit(df_merged['LandAverageTemperature'], df_merged[sea_level_col], 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(df_merged['LandAverageTemperature'].min(), 
+                           df_merged['LandAverageTemperature'].max(), 100)
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2.5, 
+               label=f'回归线: y = {z[0]:.2f}x + {z[1]:.2f}')
+        
+        # 计算相关系数
+        r = np.corrcoef(df_merged['LandAverageTemperature'], df_merged[sea_level_col])[0, 1]
+        ax.text(0.05, 0.95, f'相关系数 R = {r:.3f}', transform=ax.transAxes,
+               fontsize=12, fontweight='bold', verticalalignment='top',
+               bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        ax.set_xlabel('平均温度 (°C)', fontsize=14, fontweight='bold', color='#333333')
+        ax.set_ylabel('海平面高度 (mm)', fontsize=14, fontweight='bold', color='#333333')
+        ax.set_title('全球温度 vs 海平面高度关系', 
+                    fontsize=17, fontweight='bold', pad=25, color='#1a1a1a')
+        ax.legend(fontsize=12, frameon=True, fancybox=True, framealpha=0.95, edgecolor='gray')
+        ax.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        cbar = plt.colorbar(scatter, ax=ax, shrink=0.8)
+        cbar.set_label('年份', fontsize=12, fontweight='bold', color='#333333')
+        
+        plt.tight_layout()
+        plt.savefig(self.output_dir / '16_sea_level_vs_temperature.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print("✓ 已保存：16_sea_level_vs_temperature.png")
+    
+    def generate_all_visualizations(self, df_global=None, df_country=None, df_city=None, 
+                                   df_co2=None, df_sea_level=None):
         """生成所有可视化图表"""
         print("=" * 60)
         print("开始生成气候数据可视化...")
@@ -784,6 +1120,16 @@ class ClimateVisualizer:
                 self.plot_city_temperature_scatter(df_city)
                 self.plot_latitude_temperature_relationship(df_city)
                 self.plot_hemisphere_comparison(df_city)
+            
+            if df_co2 is not None:
+                self.plot_co2_trend(df_co2)
+                if df_global is not None:
+                    self.plot_co2_vs_temperature(df_co2, df_global)
+            
+            if df_sea_level is not None:
+                self.plot_sea_level_trend(df_sea_level)
+                if df_global is not None:
+                    self.plot_sea_level_vs_temperature(df_sea_level, df_global)
             
             print("\n" + "=" * 60)
             print("✅ 所有图表生成完成！")

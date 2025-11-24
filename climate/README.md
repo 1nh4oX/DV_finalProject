@@ -36,25 +36,52 @@ climate/
 
 ## 🚀 快速开始
 
-### 1. 下载数据
+### 1. 安装依赖
 ```bash
-# 在Kaggle上下载数据集
-# 地址：https://www.kaggle.com/datasets/berkeleyearth/climate-change-earth-surface-temperature-data
-
-# 下载后解压到 climate/data/raw/ 文件夹
-```
-
-### 2. 安装依赖
-```bash
-# 已在根目录的 venv 中安装
+# 激活虚拟环境
 source ../venv/bin/activate
+
+# 安装 kagglehub（如果未安装）
+pip install kagglehub
 ```
 
-### 3. 运行分析
+### 2. 配置 Kaggle API（首次使用）
+```bash
+# 1. 访问 https://www.kaggle.com/settings
+# 2. 点击 "Create New Token" 下载 kaggle.json
+# 3. 将 kaggle.json 放到 ~/.kaggle/ 目录
+mkdir -p ~/.kaggle
+mv ~/Downloads/kaggle.json ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
+```
+
+### 3. 自动下载数据（推荐）
 ```bash
 cd code
+python download_data.py
+```
+
+这将自动下载：
+- ✅ 温度数据（Berkeley Earth）
+- ✅ CO2排放数据
+- ✅ 海平面数据
+
+### 4. 运行分析
+```bash
 python main.py
 ```
+
+---
+
+## 📥 手动下载（备选方案）
+
+如果自动下载失败，可以手动下载：
+
+1. **温度数据**: https://www.kaggle.com/datasets/berkeleyearth/climate-change-earth-surface-temperature-data
+2. **CO2数据**: https://www.kaggle.com/datasets/ulrikthygepedersen/co2-emissions-by-country
+3. **海平面数据**: https://www.kaggle.com/datasets/kkhandekar/global-sea-level-1993-2021
+
+下载后解压到 `climate/data/raw/` 文件夹
 
 ---
 

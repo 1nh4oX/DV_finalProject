@@ -24,24 +24,46 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# 输出结果文件夹 - 防止文件过大
+# 输出结果文件夹 - 必须忽略（防止文件过大）
 # Climate模块输出
 climate/output/
+climate/output/**/*
 climate/data/processed/
+climate/data/processed/**/*
 
 # Traffic模块输出
 traffic/output/
+traffic/output/**/*
 traffic/data/processed/
+traffic/data/processed/**/*
 
 # 其他可能的输出文件夹
 output/
 outputs/
+outputs/**/*
 figures/
+figures/**/*
 reports/
+reports/**/*
 
-# 生成的数据文件（可选，如果需要版本控制数据可以注释掉）
-# climate/data/raw/*.csv
-# traffic/data/sample/*.csv
+# 数据文件 - 必须忽略（文件太大，防止仓库过大）
+# Climate 模块数据
+climate/data/raw/
+climate/data/raw/**/*
+!climate/data/raw/.gitkeep
+
+# Traffic 模块数据
+traffic/data/sample/
+traffic/data/sample/**/*
+!traffic/data/sample/.gitkeep
+
+# 所有 CSV 数据文件（额外保护，但排除根目录的 CSV 文件，如果有的话）
+*.csv
+# 允许根目录的 CSV（如果有配置需要）
+!/*.csv
+# 但排除数据目录
+climate/data/**/*.csv
+traffic/data/**/*.csv
 
 # 图表文件
 *.png
@@ -69,9 +91,22 @@ original/
 .DS_Store
 Thumbs.db
 
-# Climate数据集 - 原始数据
-climate/data/raw/GlobalLandTemperaturesByCity.csv
-climate/data/raw/GlobalLandTemperaturesByCountry.csv
-climate/data/raw/GlobalLandTemperaturesByMajorCity.csv
-climate/data/raw/GlobalLandTemperaturesByState.csv
-climate/data/raw/GlobalTemperatures.csv
+# API Token 和密钥文件 - 必须忽略（保护隐私）
+.kaggle/
+kaggle.json
+*.key
+*.token
+.env
+.env.local
+*.secret
+
+# 环境变量文件
+.envrc
+secrets.yaml
+secrets.yml
+
+# API Token 相关（如果项目中有）
+**/kaggle.json
+**/.kaggle/
+**/*_token.txt
+**/*_api_key.txt

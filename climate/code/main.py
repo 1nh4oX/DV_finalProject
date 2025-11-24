@@ -54,6 +54,14 @@ def main():
         print("\n加载城市温度数据...")
         df_city = loader.load_city_temperatures(major_cities_only=True)
         
+        # 尝试加载CO2数据（可选）
+        print("\n尝试加载CO2数据...")
+        df_co2 = loader.load_co2_data()
+        
+        # 尝试加载海平面数据（可选）
+        print("\n尝试加载海平面数据...")
+        df_sea_level = loader.load_sea_level_data()
+        
     except FileNotFoundError as e:
         print(f"\n❌ 数据文件未找到: {e}")
         print("请确保已下载并解压数据到 data/raw/ 文件夹")
@@ -93,7 +101,9 @@ def main():
     visualizer.generate_all_visualizations(
         df_global=df_global_clean,
         df_country=df_country_clean,
-        df_city=df_city_clean
+        df_city=df_city_clean,
+        df_co2=df_co2 if 'df_co2' in locals() and df_co2 is not None else None,
+        df_sea_level=df_sea_level if 'df_sea_level' in locals() and df_sea_level is not None else None
     )
     
     # 完成

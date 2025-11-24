@@ -22,6 +22,7 @@ scikit-learn>=1.2.0
 # 数据获取
 requests>=2.31.0
 beautifulsoup4>=4.12.0
+kagglehub>=0.2.0
 
 # Jupyter
 jupyter>=1.0.0
