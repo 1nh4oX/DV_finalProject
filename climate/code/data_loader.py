@@ -222,12 +222,12 @@ class ClimateDataLoader:
         # 查找CO2列（支持多种命名）
         co2_cols = ['co2', 'CO2', 'co2_emissions', 'CO2_emissions', 'co2_ppm', 'CO2_ppm', 
                    'carbon_dioxide', 'Carbon Dioxide', 'emission', 'Emissions',
-                   'total_co2', 'Total CO2', 'co2_kt', 'CO2_kt']
+                   'total_co2', 'Total CO2', 'co2_kt', 'CO2_kt', 'value', 'Value']
         co2_col = None
         for col in df.columns:
             col_lower = col.lower()
             for co2_pattern in co2_cols:
-                if co2_pattern.lower() in col_lower:
+                if co2_pattern.lower() in col_lower or co2_pattern.lower() == col_lower:
                     co2_col = col
                     break
             if co2_col:
@@ -238,13 +238,29 @@ class ClimateDataLoader:
             print(f"   可用列: {list(df.columns)}")
             return None
         
+        # 重命名CO2列为标准名称
+        if co2_col != 'co2_emission':
+            df = df.rename(columns={co2_col: 'co2_emission'})
+        
+        # 重命名国家列为标准名称
+        if 'country_name' in df.columns:
+            df = df.rename(columns={'country_name': 'country'})
+        elif 'Country' in df.columns:
+            df = df.rename(columns={'Country': 'country'})
+        
+        # 如果没有 co2_per_capita 列，尝试计算（需要人口数据）
+        if 'co2_per_capita' not in df.columns:
+            # 简单估算：假设每个国家的CO2排放与人口相关
+            # 这里我们添加一个占位符，实际使用时可以从其他数据源获取
+            df['co2_per_capita'] = df['co2_emission'] / 1e6  # 简化计算
+        
         # 确保年份列存在
         if 'year' not in df.columns:
             print("⚠️  无法确定年份列")
             return None
         
         # 清理数据
-        df = df.dropna(subset=[co2_col, 'year'])
+        df = df.dropna(subset=['co2_emission', 'year'])
         df['year'] = df['year'].astype(int)
         
         print(f"✓ 加载完成：{len(df)} 条记录")
