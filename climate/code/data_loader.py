@@ -351,7 +351,8 @@ class ClimateDataLoader:
         # 查找海平面列（支持多种命名）
         sea_level_cols = ['sea_level', 'Sea_Level', 'sea_level_mm', 'Sea_Level_mm', 
                          'GMSL', 'gmsl', 'height', 'Height', 'level', 'Level',
-                         'sea level', 'Sea Level', 'global_mean_sea_level', 'GMSL_mm']
+                         'sea level', 'Sea Level', 'global_mean_sea_level', 'GMSL_mm',
+                         'GMSL_noGIA', 'GMSL_GIA']
         sea_level_col = None
         for col in df.columns:
             col_lower = col.lower()
@@ -367,19 +368,24 @@ class ClimateDataLoader:
             print(f"   可用列: {list(df.columns)}")
             return None
         
+        # 重命名为标准列名
+        if sea_level_col != 'sea_level':
+            df = df.rename(columns={sea_level_col: 'sea_level'})
+            print(f"  已将列 '{sea_level_col}' 重命名为 'sea_level'")
+        
         # 确保年份列存在
         if 'year' not in df.columns:
             print("⚠️  无法确定年份列")
             return None
         
         # 清理数据
-        df = df.dropna(subset=[sea_level_col, 'year'])
+        df = df.dropna(subset=['sea_level', 'year'])
         df['year'] = df['year'].astype(int)
         
         print(f"✓ 加载完成：{len(df)} 条记录")
         if 'year' in df.columns:
             print(f"  时间范围：{df['year'].min()} - {df['year'].max()}")
-        print(f"  海平面列：{sea_level_col}")
+        print(f"  海平面列：sea_level (原列名: {sea_level_col})")
         
         return df
     

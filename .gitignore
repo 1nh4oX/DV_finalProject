@@ -22,7 +22,7 @@ ENV/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
-*.ipynb
+# *.ipynb  # 暂时允许访问notebook文件
 
 # 输出结果文件夹 - 必须忽略（防止文件过大）
 # Climate模块输出
