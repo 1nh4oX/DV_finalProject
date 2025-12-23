@@ -110,3 +110,6 @@ secrets.yml
 **/.kaggle/
 **/*_token.txt
 **/*_api_key.txt
+
+# Essay drafts
+essay/
